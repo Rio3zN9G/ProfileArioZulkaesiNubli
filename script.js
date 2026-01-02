@@ -15,21 +15,23 @@ window.addEventListener('load', () => {
     const icon4 = document.getElementById('icon-4');
     const loaderText = document.querySelector('.loader-text');
 
-    // Sequential Animation Timeline
-    setTimeout(() => { icon1.classList.add('active'); }, 300);
-    setTimeout(() => { icon2.classList.add('active'); }, 600);
-    setTimeout(() => { icon3.classList.add('active'); }, 900);
-    setTimeout(() => { icon4.classList.add('active'); }, 1200);
+    if (loader && icon1 && icon2 && icon3 && icon4 && loaderText) {
+        // Sequential Animation Timeline
+        setTimeout(() => { icon1.classList.add('active'); }, 300);
+        setTimeout(() => { icon2.classList.add('active'); }, 600);
+        setTimeout(() => { icon3.classList.add('active'); }, 900);
+        setTimeout(() => { icon4.classList.add('active'); }, 1200);
 
-    setTimeout(() => {
-        loaderText.classList.add('revealed');
-    }, 1600);
+        setTimeout(() => {
+            loaderText.classList.add('revealed');
+        }, 1600);
 
-    setTimeout(() => {
-        // Slide up and remove
-        loader.style.transition = 'transform 0.8s cubic-bezier(0.7, 0, 0.3, 1)';
-        loader.style.transform = 'translateY(-100%)';
-    }, 2800);
+        setTimeout(() => {
+            // Slide up and remove
+            loader.style.transition = 'transform 0.8s cubic-bezier(0.7, 0, 0.3, 1)';
+            loader.style.transform = 'translateY(-100%)';
+        }, 2800);
+    }
 });
 
 // ----------------- MOBILE SIDEBAR LOGIC -----------------
@@ -49,14 +51,16 @@ function closeSidebar() {
     mobileOverlay.classList.remove('active');
 }
 
-hamburger.addEventListener('click', openSidebar);
-closeBtn.addEventListener('click', closeSidebar);
-mobileOverlay.addEventListener('click', closeSidebar);
+if (hamburger && closeBtn && mobileOverlay) {
+    hamburger.addEventListener('click', openSidebar);
+    closeBtn.addEventListener('click', closeSidebar);
+    mobileOverlay.addEventListener('click', closeSidebar);
 
-// Close sidebar when clicking a link
-navLinks.forEach(link => {
-    link.addEventListener('click', closeSidebar);
-});
+    // Close sidebar when clicking a link
+    navLinks.forEach(link => {
+        link.addEventListener('click', closeSidebar);
+    });
+}
 
 
 // ----------------- STATS COUNTER ANIMATION -----------------
@@ -66,11 +70,11 @@ const animateCounters = () => {
     counters.forEach(counter => {
         const target = +counter.getAttribute('data-target');
         const count = +counter.innerText;
-        const increment = target / 100; // Speed adjustment
+        const increment = Math.ceil(target / 100); // Dynamic increment
 
         if (count < target) {
-            counter.innerText = Math.ceil(count + increment);
-            setTimeout(animateCounters, 20); // Speed
+            counter.innerText = Math.min(count + increment, target);
+            setTimeout(animateCounters, 30);
         } else {
             counter.innerText = target + "+";
         }
@@ -93,103 +97,181 @@ window.addEventListener('scroll', () => {
 });
 
 
+// ----------------- SCROLL PROGRESS BAR -----------------
+window.addEventListener('scroll', () => {
+    const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    // Prevent division by zero
+    const scrolled = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+
+    const progressBar = document.querySelector('.scroll-progress-bar');
+    if (progressBar) {
+        progressBar.style.width = scrolled + '%';
+    }
+});
+
+
+// ----------------- VANILLA 3D TILT EFFECT -----------------
+class VanillaTilt {
+    constructor(element) {
+        this.element = element;
+        this.width = this.element.offsetWidth;
+        this.height = this.element.offsetHeight;
+        this.left = this.element.offsetLeft;
+        this.top = this.element.offsetTop;
+        this.transitionTimeout = null;
+
+        // Settings
+        this.max = 10; // Max tilt rotation (degrees)
+        this.perspective = 1000;
+        this.scale = 1.05;
+        this.speed = 400;
+
+        this.init();
+    }
+
+    init() {
+        this.element.addEventListener('mouseenter', this.onMouseEnter.bind(this));
+        this.element.addEventListener('mousemove', this.onMouseMove.bind(this));
+        this.element.addEventListener('mouseleave', this.onMouseLeave.bind(this));
+
+        // Add 3D CSS
+        this.element.style.transformStyle = 'preserve-3d';
+    }
+
+    onMouseEnter() {
+        this.element.style.transition = 'none';
+    }
+
+    onMouseMove(event) {
+        // Need to get rect on every move or at least on enter to support scrolling
+        const rect = this.element.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width; // 0 to 1
+        const y = (event.clientY - rect.top) / rect.height; // 0 to 1
+
+        const tiltX = (this.max * -1) + (x * (this.max * 2)); // -max to +max
+        const tiltY = (this.max) - (y * (this.max * 2)); // +max to -max
+
+        this.element.style.transform = `
+            perspective(${this.perspective}px) 
+            rotateX(${tiltY}deg) 
+            rotateY(${tiltX}deg) 
+            scale3d(${this.scale}, ${this.scale}, ${this.scale})
+        `;
+    }
+
+    onMouseLeave() {
+        this.element.style.transition = `transform ${this.speed}ms cubic-bezier(.03,.98,.52,.99)`;
+        this.element.style.transform = `perspective(${this.perspective}px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+    }
+}
+
+// Apply Tilt to Cards with delay to ensure DOM is ready
+setTimeout(() => {
+    const tiltElements = document.querySelectorAll('.service-card, .stat-item, .contact-card, .skill-item');
+    tiltElements.forEach(el => new VanillaTilt(el));
+}, 100);
+
+
 // Header Scroll Effect
 const header = document.querySelector('header');
 window.addEventListener('scroll', () => {
-    if (window.scrollY > 50) {
+    if (header && window.scrollY > 50) {
         header.classList.add('scrolled');
-    } else {
+    } else if (header) {
         header.classList.remove('scrolled');
     }
 });
 
 // Canvas Background Animation (Subtle Blue Particles)
 const canvas = document.getElementById('bg-canvas');
-const ctx = canvas.getContext('2d');
+if (canvas) {
+    const ctx = canvas.getContext('2d');
+    let particlesArray;
 
-let particlesArray;
-
-// Set canvas size
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-class Particle {
-    constructor(directionX, directionY, size, color) {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.directionX = directionX;
-        this.directionY = directionY;
-        this.size = size;
-        this.color = color;
+    const setCanvasSize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     }
+    setCanvasSize();
 
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-    }
-
-    update() {
-        if (this.x > canvas.width || this.x < 0) {
-            this.directionX = -this.directionX;
-        }
-        if (this.y > canvas.height || this.y < 0) {
-            this.directionY = -this.directionY;
+    class Particle {
+        constructor(directionX, directionY, size, color) {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.directionX = directionX;
+            this.directionY = directionY;
+            this.size = size;
+            this.color = color;
         }
 
-        this.x += this.directionX;
-        this.y += this.directionY;
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+        }
 
-        this.draw();
+        update() {
+            if (this.x > canvas.width || this.x < 0) {
+                this.directionX = -this.directionX;
+            }
+            if (this.y > canvas.height || this.y < 0) {
+                this.directionY = -this.directionY;
+            }
+
+            this.x += this.directionX;
+            this.y += this.directionY;
+
+            this.draw();
+        }
     }
-}
 
-function init() {
-    particlesArray = [];
-    let numberOfParticles = (canvas.height * canvas.width) / 10000;
+    function init() {
+        particlesArray = [];
+        let numberOfParticles = (canvas.height * canvas.width) / 15000;
 
-    // Create particles
-    for (let i = 0; i < numberOfParticles; i++) {
-        let size = (Math.random() * 3) + 1;
-        let directionX = (Math.random() * 0.2) - 0.1;
-        let directionY = (Math.random() * 0.2) - 0.1;
+        for (let i = 0; i < numberOfParticles; i++) {
+            let size = (Math.random() * 2) + 1;
+            let directionX = (Math.random() * 0.2) - 0.1;
+            let directionY = (Math.random() * 0.2) - 0.1;
 
-        const blueShades = [
-            'rgba(37, 99, 235, 0.1)',
-            'rgba(59, 130, 246, 0.1)',
-            'rgba(96, 165, 250, 0.1)'
-        ];
-        let color = blueShades[Math.floor(Math.random() * blueShades.length)];
+            const blueShades = [
+                'rgba(37, 99, 235, 0.05)',
+                'rgba(59, 130, 246, 0.05)'
+            ];
+            let color = blueShades[Math.floor(Math.random() * blueShades.length)];
 
-        particlesArray.push(new Particle(directionX, directionY, size, color));
+            particlesArray.push(new Particle(directionX, directionY, size, color));
+        }
     }
-}
 
-function animate() {
-    requestAnimationFrame(animate);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function animate() {
+        requestAnimationFrame(animate);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    for (let i = 0; i < particlesArray.length; i++) {
-        particlesArray[i].update();
+        for (let i = 0; i < particlesArray.length; i++) {
+            particlesArray[i].update();
+        }
     }
-}
 
-// Resize event
-window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => {
+        setCanvasSize();
+        init();
+    });
+
     init();
-});
+    animate();
+}
 
 // Active Link Highlighting on Scroll
-const sections = document.querySelectorAll('section');
-const navLi = document.querySelectorAll('.nav-links li a');
+const sectionElements = document.querySelectorAll('section');
+const navLiElements = document.querySelectorAll('.nav-links li a');
 
 window.addEventListener('scroll', () => {
     let current = '';
 
-    sections.forEach(section => {
+    sectionElements.forEach(section => {
         const sectionTop = section.offsetTop;
         const sectionHeight = section.clientHeight;
         if (pageYOffset >= (sectionTop - sectionHeight / 3)) {
@@ -197,13 +279,12 @@ window.addEventListener('scroll', () => {
         }
     });
 
-    navLi.forEach(a => {
-        a.classList.remove('active');
-        if (a.getAttribute('href').includes(current)) {
-            a.classList.add('active');
-        }
-    });
+    if (current) {
+        navLiElements.forEach(a => {
+            a.classList.remove('active');
+            if (a.getAttribute('href').includes(current)) {
+                a.classList.adpd('active');
+            }
+        });
+    }
 });
-
-init();
-animate();
